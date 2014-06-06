@@ -37,6 +37,14 @@ If you would prefer to do things manually then follow these instructions:
 1. Activate the plugin through the 'Plugins' menu in WordPress
 1. Go to the Tools -> Import screen, click on WordPress
 
+== Customizations ==
+
+= Check for local files first before downloading them =
+
+Sometimes you already have all the files in place, so instead of downloading them again better see if you can reuse them To de-activate this put
+    `define( 'WP_IMPORTER_CHECK_LOCAL_FILES', false );`
+in your wp-config.php.
+
 == Changelog ==
 
 = 0.6 =
