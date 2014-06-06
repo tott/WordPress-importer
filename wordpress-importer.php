@@ -16,6 +16,11 @@ if ( ! defined( 'WP_LOAD_IMPORTERS' ) )
 /** Display verbose errors */
 define( 'IMPORT_DEBUG', false );
 
+/** Check for local files first when importing assets */
+if ( ! defined( 'WP_IMPORTER_CHECK_LOCAL_FILES' ) ) {
+	define( 'WP_IMPORTER_CHECK_LOCAL_FILES', true );
+}
+
 // Load Importer API
 require_once ABSPATH . 'wp-admin/includes/import.php';
 
@@ -901,8 +906,28 @@ class WP_Import extends WP_Importer {
 		if ( $upload['error'] )
 			return new WP_Error( 'upload_dir_error', $upload['error'] );
 
-		// fetch the remote url and write it to the placeholder file
-		$headers = wp_get_http( $url, $upload['file'] );
+		/**
+		 * fetch the remote url and write it to the placeholder
+		 * Sometimes you already have all the files in place, so instead
+		 * of downloading them again better see if you can reuse them
+		 * put
+		 * 		define( 'WP_IMPORTER_CHECK_LOCAL_FILES', true );
+		 * in you wp-config.php to do so.
+		 */
+
+		$existing_upload = wp_upload_dir( $post['upload_date'] );
+		$existing_upload['file'] = $existing_upload['path'] . "/$file_name";
+		$existing_upload['url'] = $existing_upload['url'] . "/$file_name";
+		if ( defined( 'WP_IMPORTER_CHECK_LOCAL_FILES' ) && true === WP_IMPORTER_CHECK_LOCAL_FILES && file_exists( $existing_upload['file'] ) && filesize( $existing_upload['file'] ) > 0 ) {
+			$headers = array(
+				'response' => 200,
+				'content-length' => filesize( $existing_upload['file'] ),
+				'x-final-location' => $url
+				);
+			$upload = $existing_upload;
+		} else {
+			$headers = wp_get_http( $url, $upload['file'] );
+		}
 
 		// request failed
 		if ( ! $headers ) {
